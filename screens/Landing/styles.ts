@@ -4,10 +4,12 @@ const styles = StyleSheet.create({
   container: {
     justifyContent: 'flex-start',
     alignItems: 'center',
+    backgroundColor: 'white',
   },
   listContainer: {
-    // backgroundColor: 'red',
     width: '100%',
+    paddingTop: 20,
+    alignItems: 'center',
   },
   actIndicatorContainer: {
     flex: 1,

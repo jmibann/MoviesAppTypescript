@@ -1,6 +1,6 @@
 import React from 'react';
-import {ActivityIndicator, FlatList} from 'react-native';
-import {Tile} from 'react-native-elements';
+import {ActivityIndicator, FlatList, View, Image, Text} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 import {Movie, Configuration} from '../../screens/Landing';
 
@@ -10,33 +10,37 @@ interface Props {
   movies: Movie[];
   config: Configuration;
   fetchMoreItems: () => void;
+  onPressHandler: (movie: Movie) => void;
 }
 
 interface ItemProps {
-  title: string;
-  imgURL: string;
+  movie: Movie;
 }
 
-const MovieItems: React.FC<Props> = ({movies, config, fetchMoreItems}) => {
+const MovieItems: React.FC<Props> = ({
+  movies,
+  config,
+  fetchMoreItems,
+  onPressHandler,
+}) => {
   const getImgUrl = (path: string): string => {
     const {images} = config as Configuration;
     return images.base_url + images.poster_sizes[3] + path;
   };
 
-  const Item: React.FC<ItemProps> = ({title, imgURL}) => {
-    {console.log(' ==> ', movies)}
+  const Item: React.FC<ItemProps> = ({movie}) => {
+    const {title, poster_path} = movie;
     return (
-      <Tile
-        imageSrc={{uri: imgURL}}
-        containerStyle={styles.tileContainer}
-        contentContainerStyle={styles.tileContent}
-        title={title}
-        imageProps={{
-          PlaceholderContent: <ActivityIndicator />,
-          style: styles.imageStyle,
-          resizeMode: 'contain',
-        }}
-      />
+      <View style={styles.cardContainer}>
+        <TouchableOpacity onPress={() => onPressHandler(movie)}>
+          <Image
+            source={{uri: getImgUrl(poster_path)}}
+            resizeMode="contain"
+            style={styles.imageStyle}
+          />
+        </TouchableOpacity>
+        <Text style={styles.title}>{title}</Text>
+      </View>
     );
   };
 
@@ -44,12 +48,11 @@ const MovieItems: React.FC<Props> = ({movies, config, fetchMoreItems}) => {
     <>
       <FlatList
         data={movies}
-        renderItem={({item}) => (
-          <Item title={item.title} imgURL={getImgUrl(item.poster_path)} />
-        )}
-        keyExtractor={(item) => item.id}
+        renderItem={({item}) => <Item movie={item} />}
+        keyExtractor={(item, index) => `${index}-${item.id}`}
         onEndReachedThreshold={0}
         onEndReached={fetchMoreItems}
+        contentContainerStyle={styles.flatlistContentStyle}
       />
     </>
   );

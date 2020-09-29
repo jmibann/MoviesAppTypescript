@@ -1,13 +1,7 @@
 import React, {useEffect, useState} from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  SafeAreaView,
-  ScrollView,
-  View,
-} from 'react-native';
+import {ActivityIndicator, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import {Button, Text, ThemeProvider} from 'react-native-elements';
+import {Text, ThemeProvider} from 'react-native-elements';
 import MovieItems from '../../components/MovieItems';
 
 import styles from './styles';
@@ -64,52 +58,55 @@ const theme = {
 const LandingScreen: React.FC<Props> = () => {
   const navigation = useNavigation();
   const [movies, setMovies] = useState<FetchInfo | null>(null);
+  const [movieList, setMovieList] = useState<Movie[]>([]);
   const [page, setPage] = useState<number>(1);
   const [configuration, setConfiguration] = useState<Configuration | null>(
     null,
   );
 
-  const loadLandingMovies = async () =>
-    await Movies.fetchMovies('a', page)
-      .then((list) => setMovies(list))
-      .then(() => setPage((prevValue) => prevValue + 1))
+  const loadLandingMovies = async (pageNumber: number) =>
+    await Movies.fetchMovies('a', pageNumber)
+      .then((res) => {
+        if (!movies) {
+          setMovies(res);
+        }
+        setMovieList((prev) => [...prev, ...res.results]);
+      })
       .catch((err) => console.log('ERROR: ', err));
 
-  const fetchConfiguration = async () => {
-    await Movies.getConfiguration().then((conf) => setConfiguration(conf));
-  };
-
   useEffect(() => {
-    loadLandingMovies();
+    loadLandingMovies(page);
   }, []);
 
   useEffect(() => {
+    const fetchConfiguration = async () => {
+      await Movies.getConfiguration().then((conf) => setConfiguration(conf));
+    };
+
     fetchConfiguration();
   }, []);
 
-  const handler = () => {
-    Alert.alert('Button handler');
-    console.log('=========> BUtton Pressed');
-    // navigation.navigate()
+  const onPressHandler = (movie: Movie) => {
+    navigation.navigate('MovieDetails', {movie, configuration});
   };
 
   const fetchMoreItems = () => {
-    console.log('=========> ');
-    loadLandingMovies();
+    setPage((prevValue) => prevValue + 1);
+    loadLandingMovies(page + 1);
   };
 
   return (
     <ThemeProvider theme={theme}>
       <View style={styles.container}>
         <Text h3>Welcome to Movies App</Text>
-        {/* {console.log(' ==> ', page)} */}
 
         {movies && configuration ? (
           <View style={styles.listContainer}>
             <MovieItems
-              movies={movies.results}
+              movies={movieList}
               config={configuration}
               fetchMoreItems={fetchMoreItems}
+              onPressHandler={onPressHandler}
             />
           </View>
         ) : (
